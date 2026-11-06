@@ -12,7 +12,7 @@ A modern, full-stack web application built with **Next.js (App Router)** and **T
 - **Modern UI/UX:** Sleek, responsive dark-mode interface built with Tailwind CSS and Lucide React icons.
 - **Secure Architecture:** Backend API routes designed with Next.js Server Actions / API routes keeping API keys secure on the server side.
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Frontend & Backend:** Next.js, React, Tailwind CSS
 - **Icons:** Lucide React
