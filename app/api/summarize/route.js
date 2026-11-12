@@ -18,13 +18,13 @@ export async function POST(req) {
       systemPrompt = "Extract the top 5 most important keywords or key terms from the provided text and provide a brief 1-sentence explanation for each in English.";
     }
 
-    // Google Gemini API Request (Free tier via gemini-2.5-flash or gemini-1.5-flash)
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       throw new Error('GEMINI_API_KEY is not configured in environment variables.');
     }
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+    // Güncel ve aktif model adı: gemini-1.5-flash
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
