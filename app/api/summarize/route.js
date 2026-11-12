@@ -18,29 +18,39 @@ export async function POST(req) {
       systemPrompt = "Extract the top 5 most important keywords or key terms from the provided text and provide a brief 1-sentence explanation for each in English.";
     }
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    // Google Gemini API Request (Free tier via gemini-2.5-flash or gemini-1.5-flash)
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error('GEMINI_API_KEY is not configured in environment variables.');
+    }
+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: text }
+        system_instruction: {
+          parts: [{ text: systemPrompt }]
+        },
+        contents: [
+          {
+            parts: [{ text: text }]
+          }
         ],
-        temperature: 0.5,
+        generationConfig: {
+          temperature: 0.5,
+        }
       }),
     });
 
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error?.message || 'Failed to process request with OpenAI API.');
+      throw new Error(data.error?.message || 'Failed to process request with Gemini API.');
     }
 
-    const summaryResult = data.choices[0].message.content;
+    const summaryResult = data.candidates[0].content.parts[0].text;
 
     return NextResponse.json({ summary: summaryResult });
   } catch (error) {
