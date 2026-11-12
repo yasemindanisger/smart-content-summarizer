@@ -27,3 +27,5 @@ Follow these steps to run the project locally on your machine:
    ```bash
    git clone [https://github.com/yasemindanisger/smart-content-summarizer.git](https://github.com/yasemindanisger/smart-content-summarizer.git)
    cd smart-content-summarizer
+
+   
