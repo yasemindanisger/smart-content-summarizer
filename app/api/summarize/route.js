@@ -23,8 +23,8 @@ export async function POST(req) {
       throw new Error('GEMINI_API_KEY is not configured in environment variables.');
     }
 
-    // v1 endpoint ve gemini-1.5-flash kombinasyonu
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+    // Doğrudan çalışan kararlı yapı
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -32,7 +32,6 @@ export async function POST(req) {
       body: JSON.stringify({
         contents: [
           {
-            role: 'user',
             parts: [{ text: `${systemPrompt}\n\nText to summarize:\n${text}` }]
           }
         ],
