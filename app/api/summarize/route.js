@@ -40,7 +40,7 @@ export async function POST(req) {
           'x-goog-api-key': apiKey
         },
         body: JSON.stringify({
-          model: 'gemini-3.8-flash',
+          model: 'gemini-3.5-flash-lite',
           input: `${systemPrompt}\n\nText to summarize:\n${text}`,
           generation_config: {
             thinking_level: 'low',
