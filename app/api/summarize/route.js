@@ -32,55 +32,53 @@ export async function POST(req) {
         'Extract the 5 most important keywords and provide a brief explanation for each in English.'
     };
 
-    const systemPrompt =
-      prompts[mode] || prompts.bullets;
+    const systemPrompt = prompts[mode] || prompts.bullets;
 
     const url =
       'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent';
 
-    let response;
-    let data;
+    console.log('Sending request to Gemini...');
 
-    // Retry once if Gemini is temporarily overloaded.
-    for (let attempt = 0; attempt < 2; attempt++) {
-      response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': apiKey
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: `${systemPrompt}\n\nText to summarize:\n${text}`
-            }]
-          }],
-          generationConfig: {
-            temperature: 0.5,
-            maxOutputTokens: 2048
-          }
-        }),
-        cache: 'no-store'
-      });
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': apiKey
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{
+            text: `${systemPrompt}\n\nText to summarize:\n${text}`
+          }]
+        }],
+        generationConfig: {
+          temperature: 0.5,
+          maxOutputTokens: 2048
+        }
+      }),
+      signal: AbortSignal.timeout(18000),
+      cache: 'no-store'
+    });
 
-      data = await response.json();
-
-      if (response.ok || response.status !== 503 || attempt === 1) {
-        break;
-      }
-
-      await new Promise(resolve => setTimeout(resolve, 1500));
-    }
+    const data = await response.json();
 
     if (!response.ok) {
       console.error('Gemini API Error:', response.status, data);
 
-      const message =
-        response.status === 503
-          ? 'Gemini is temporarily overloaded. Please try again shortly.'
-          : response.status === 429
-          ? 'API quota or rate limit reached. Check your Gemini API usage.'
-          : data.error?.message || 'Gemini API request failed.';
+      let message = 'Gemini API request failed.';
+
+      if (response.status === 503) {
+        message =
+          'Gemini is temporarily overloaded. Please try again shortly.';
+      } else if (response.status === 429) {
+        message =
+          'API quota or rate limit reached. Check your Gemini API usage.';
+      } else if (response.status === 403) {
+        message =
+          'API access denied. Check your Gemini API key and permissions.';
+      } else {
+        message = data.error?.message || message;
+      }
 
       return NextResponse.json(
         { error: message },
@@ -102,10 +100,24 @@ export async function POST(req) {
       );
     }
 
+    console.log('Summary generated successfully.');
+
     return NextResponse.json({ summary });
 
   } catch (error) {
     console.error('Summary API Error:', error);
+
+    if (
+      error.name === 'TimeoutError' ||
+      error.name === 'AbortError'
+    ) {
+      return NextResponse.json(
+        {
+          error: 'Gemini took too long to respond. Please try again.'
+        },
+        { status: 504 }
+      );
+    }
 
     return NextResponse.json(
       { error: 'An unexpected server error occurred.' },
