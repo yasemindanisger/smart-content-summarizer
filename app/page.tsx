@@ -85,7 +85,7 @@ export default function Home() {
   ];
 
   return (
-    <main className="min-h-screen bg-gray-100 text-gray-900 font-sans">
+    <main className="min-h-screen bg-white-100 text-gray-900 font-sans">
 
       {/* Header */}
 
