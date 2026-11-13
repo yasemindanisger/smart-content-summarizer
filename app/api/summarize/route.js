@@ -1,4 +1,8 @@
+import { GoogleGenAI } from '@google/genai';
 import { NextResponse } from 'next/server';
+
+// Resmi Google Gen AI SDK ile başlatma
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export async function POST(req) {
   try {
@@ -8,7 +12,7 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Please enter or paste some text to summarize.' }, { status: 400 });
     }
 
-    // Dynamic system prompts based on selected mode
+    // Seçilen moda göre sistem talimatı
     let systemPrompt = "You are a helpful and professional text analyst.";
     if (mode === 'bullets') {
       systemPrompt = "Analyze the provided text and summarize the key insights into 3 to 5 clear bullet points in English.";
@@ -23,31 +27,16 @@ export async function POST(req) {
       throw new Error('GEMINI_API_KEY is not configured in environment variables.');
     }
 
-    // Doğrudan çalışan kararlı yapı
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [{ text: `${systemPrompt}\n\nText to summarize:\n${text}` }]
-          }
-        ],
-        generationConfig: {
-          temperature: 0.5,
-        }
-      }),
+    // Resmi SDK kullanarak en kararlı flash modeline istek atma
+    const response = await ai.models.generateContent({
+      model: 'gemini-1.5-flash',
+      contents: `${systemPrompt}\n\nText to summarize:\n${text}`,
+      config: {
+        temperature: 0.5,
+      }
     });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error?.message || 'Failed to process request with Gemini API.');
-    }
-
-    const summaryResult = data.candidates[0].content.parts[0].text;
+    const summaryResult = response.text;
 
     return NextResponse.json({ summary: summaryResult });
   } catch (error) {
