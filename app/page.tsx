@@ -7,7 +7,10 @@ import {
   Copy,
   Check,
   FileText,
-  RefreshCw
+  RefreshCw,
+  AlignLeft,
+  List,
+  ClipboardPaste,
 } from 'lucide-react';
 
 export default function Home() {
@@ -24,12 +27,12 @@ export default function Home() {
       return;
     }
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30000);
-
     setLoading(true);
     setError('');
     setSummary('');
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
 
     try {
       const res = await fetch('/api/summarize', {
@@ -37,10 +40,7 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          text,
-          mode,
-        }),
+        body: JSON.stringify({ text, mode }),
         signal: controller.signal,
       });
 
@@ -55,13 +55,14 @@ export default function Home() {
       }
 
       setSummary(data.summary);
-
     } catch (err) {
-      if (err.name === 'AbortError') {
-        setError('Request timed out. Please try again.');
-      } else {
-        setError(err.message || 'Something went wrong.');
-      }
+      const error = err as Error;
+
+      setError(
+        error.name === 'AbortError'
+          ? 'Request timed out. Please try again.'
+          : error.message || 'Something went wrong.'
+      );
     } finally {
       clearTimeout(timeout);
       setLoading(false);
@@ -73,221 +74,170 @@ export default function Home() {
       await navigator.clipboard.writeText(summary);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
+    } catch {
       setError('Unable to copy text.');
     }
   };
 
-  const modes = [
-    { id: 'bullets', label: 'Bullet Points' },
-    { id: 'short', label: 'Paragraph' },
-    { id: 'keywords', label: 'Keywords' },
-  ];
+  const handlePaste = async () => {
+    try {
+      const pastedText = await navigator.clipboard.readText();
+      setText((current) => current + pastedText);
+    } catch {
+      setError('Clipboard access is not available. Please paste manually.');
+    }
+  };
 
   return (
-    <main className="min-h-screen !bg-white-100 text-gray-900 font-sans">
+    <main className="app-page">
+      <header className="topbar">
+        <a href="/" className="brand">
+          <span className="brand-icon">
+            <Sparkles size={23} />
+          </span>
+          <span>Smart<span className="brand-highlight">Summarizer</span></span>
+        </a>
 
-      {/* Header */}
-
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-6xl mx-auto px-6 py-5 flex items-center gap-3">
-          <div className="bg-blue-900 text-white p-2 rounded-md">
-            <FileText className="w-6 h-6" />
-          </div>
-
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">
-              Smart Content Summarizer
-            </h1>
-            <p className="text-xs text-gray-500">
-              AI-Powered Text Intelligence
-            </p>
-          </div>
-        </div>
+        <nav className="nav-links">
+          <a href="#home">Home</a>
+          <a href="#summarizer">Summarizer</a>
+          <a href="#about">About</a>
+        </nav>
       </header>
 
-      {/* Main Content */}
-
-      <div className="max-w-6xl mx-auto px-5 py-10 md:py-14">
-
-        <div className="text-center mb-10 space-y-3">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
-            Make Your Content Easier to Understand
-          </h2>
-
-          <p className="text-gray-600 max-w-2xl mx-auto leading-relaxed">
-            Turn long articles, documents, and notes into clear,
-            concise summaries with the help of Google Gemini AI.
-          </p>
+      <section className="hero" id="home">
+        <div className="hero-label">
+          <Sparkles size={15} />
+          AI-POWERED TEXT INTELLIGENCE
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <h1>Free Text Summarizer</h1>
 
-          {/* Input Card */}
+        <p>
+          Turn long articles, documents, and notes into clear,
+          concise summaries with the help of Google Gemini AI.
+        </p>
+      </section>
 
-          <section className="bg-white border border-gray-200 rounded-lg shadow-sm p-6 space-y-5">
+      <section className="workspace" id="summarizer">
+        <div className="toolbar">
+          <span className="toolbar-label">Output format:</span>
 
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                <FileText className="w-5 h-5 text-blue-900" />
-                Source Text
-              </h3>
+          <button
+            className={`mode-button ${mode === 'paragraph' ? 'active' : ''}`}
+            onClick={() => setMode('paragraph')}
+          >
+            <AlignLeft size={17} />
+            Paragraph
+          </button>
 
-              <p className="text-sm text-gray-500 mt-1">
-                Paste the text you want to summarize below.
-              </p>
-            </div>
+          <button
+            className={`mode-button ${mode === 'bullets' ? 'active' : ''}`}
+            onClick={() => setMode('bullets')}
+          >
+            <List size={17} />
+            Bullet Points
+          </button>
+        </div>
 
-            <div>
-              <textarea
-                rows={12}
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                placeholder="Paste your article, document, essay, or notes here..."
-                className="w-full resize-y rounded-md border border-gray-300 bg-white p-4 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-800 focus:border-blue-800 transition"
-              />
-
-              <div className="text-right text-xs text-gray-500 mt-2">
-                {text.length.toLocaleString()} characters
+        <div className="editor-grid">
+          <div className="editor-panel">
+            <div className="panel-heading">
+              <div>
+                <FileText size={19} />
+                <span>Source Text</span>
               </div>
+              <span className="panel-caption">Your original content</span>
             </div>
 
-            {/* Output Format */}
+            <textarea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder="Paste your article, document, essay, or notes here..."
+              className="text-editor"
+            />
 
-            <div className="space-y-3">
-              <label className="block text-sm font-semibold text-gray-800">
-                Output Format
-              </label>
+            <div className="panel-footer">
+              <span className="word-count">
+                {text.length} characters
+              </span>
 
-              <div className="grid grid-cols-3 gap-2">
-                {modes.map((m) => (
-                  <button
-                    key={m.id}
-                    type="button"
-                    onClick={() => setMode(m.id)}
-                    aria-pressed={mode === m.id}
-                    className={`rounded-md border px-2 py-3 text-xs sm:text-sm font-medium transition ${
-                      mode === m.id
-                        ? 'bg-blue-900 border-blue-900 text-white'
-                        : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-                    }`}
-                  >
-                    {m.label}
-                  </button>
-                ))}
+              <button className="paste-button" onClick={handlePaste}>
+                <ClipboardPaste size={16} />
+                Paste Text
+              </button>
+            </div>
+          </div>
+
+          <div className="result-panel">
+            <div className="panel-heading">
+              <div>
+                <Sparkles size={19} />
+                <span>Generated Summary</span>
               </div>
+              <span className="panel-caption">AI-powered result</span>
             </div>
 
-            {/* Generate Button */}
-
-            <button
-              type="button"
-              onClick={handleSummarize}
-              disabled={loading || !text.trim()}
-              className="w-full flex items-center justify-center gap-2 rounded-md bg-blue-900 hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-3 px-5 transition"
-            >
+            <div className="result-content">
               {loading ? (
-                <>
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                  Processing Text...
-                </>
+                <div className="empty-state">
+                  <RefreshCw className="loading-icon" size={32} />
+                  <h3>Generating your summary...</h3>
+                  <p>Gemini AI is working on your text.</p>
+                </div>
+              ) : summary ? (
+                <div className="summary-text">{summary}</div>
               ) : (
-                <>
-                  <Sparkles className="w-4 h-4" />
-                  Generate Summary
-                </>
+                <div className="empty-state">
+                  <div className="empty-icon">
+                    <FileText size={30} />
+                  </div>
+                  <h3>Your summary will appear here</h3>
+                  <p>
+                    Enter your text and click Generate Summary
+                    to get started.
+                  </p>
+                </div>
               )}
-            </button>
+            </div>
 
-            {/* Error */}
-
-            {error && (
-              <div
-                role="alert"
-                className="rounded-md border border-red-200 bg-red-50 text-red-700 p-3 text-sm"
-              >
-                {error}
+            {summary && (
+              <div className="result-actions">
+                <button className="copy-button" onClick={handleCopy}>
+                  {copied ? <Check size={17} /> : <Copy size={17} />}
+                  {copied ? 'Copied!' : 'Copy Summary'}
+                </button>
               </div>
             )}
-
-          </section>
-
-          {/* Output Card */}
-
-          <section className="bg-white border border-gray-200 rounded-lg shadow-sm p-6 flex flex-col">
-
-            <div className="flex items-center justify-between border-b border-gray-200 pb-4">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Generated Summary
-                </h3>
-
-                <p className="text-sm text-gray-500 mt-1">
-                  Your summarized content will appear here.
-                </p>
-              </div>
-
-              {summary && (
-                <button
-                  type="button"
-                  onClick={handleCopy}
-                  className="flex items-center gap-2 border border-gray-300 rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
-                >
-                  {copied ? (
-                    <>
-                      <Check className="w-4 h-4 text-green-700" />
-                      Copied
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-4 h-4" />
-                      Copy
-                    </>
-                  )}
-                </button>
-              )}
-            </div>
-
-            <div className="flex-1 mt-5 min-h-[300px] rounded-md border border-gray-200 bg-gray-50 p-5">
-              {summary ? (
-                <div className="text-sm leading-7 text-gray-800 whitespace-pre-line">
-                  {summary}
-                </div>
-              ) : (
-                <div className="min-h-[260px] flex flex-col items-center justify-center text-center">
-                  <div className="bg-gray-200 rounded-full p-4 mb-4">
-                    <FileText className="w-7 h-7 text-gray-500" />
-                  </div>
-
-                  <p className="text-gray-700 font-medium">
-                    No summary yet
-                  </p>
-
-                  <p className="text-sm text-gray-500 mt-2 max-w-xs">
-                    Your AI-generated summary will appear here after
-                    you submit your text.
-                  </p>
-                </div>
-              )}
-            </div>
-
-          </section>
-
+          </div>
         </div>
 
-        {/* Footer */}
+        {error && <div className="error-message">{error}</div>}
 
-        <footer className="mt-10 border-t border-gray-200 pt-6 text-center">
-          <p className="text-sm text-gray-500">
-            Powered by Google Gemini AI
-          </p>
+        <div className="generate-area">
+          <button
+            className="generate-button"
+            onClick={handleSummarize}
+            disabled={loading || !text.trim()}
+          >
+            {loading ? (
+              <RefreshCw size={19} className="loading-icon" />
+            ) : (
+              <Sparkles size={19} />
+            )}
+            {loading ? 'Generating...' : 'Generate Summary'}
+          </button>
 
-          <p className="text-xs text-gray-400 mt-2">
-            Smart Content Summarizer © 2026
-          </p>
-        </footer>
+          <span className="privacy-note">
+            Your content is ready for AI-powered summarization.
+          </span>
+        </div>
+      </section>
 
-      </div>
+      <footer className="site-footer" id="about">
+        <p>Powered by Google Gemini AI</p>
+        <span>Smart Content Summarizer © 2026</span>
+      </footer>
     </main>
   );
 }
