@@ -39,11 +39,14 @@ IMPORTANT RULES:
 Summarize the following text using clear and concise bullet points.
 
 IMPORTANT RULES:
-- Use bullet points for each main idea.
-- Do NOT write a single paragraph.
+- Use the bullet symbol • at the beginning of each point.
+- Do NOT use asterisks (*) as bullet markers.
+- Do NOT use numbered lists.
+- Put each bullet point on a separate line.
+- Keep each point clear and concise.
 - Preserve the most important information.
 - Use the same language as the original text.
-      `,
+`,
 
       short: `
 Write a short, clear paragraph summarizing the following text.
