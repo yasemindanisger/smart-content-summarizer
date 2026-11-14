@@ -22,14 +22,46 @@ export async function POST(req) {
     }
 
     const prompts = {
-      bullets: 'Summarize the following text using clear and concise bullet points.',
-      short: 'Write a short paragraph summarizing the following text.',
-      keywords: 'Extract the most important keywords and key phrases from the following text.'
+      paragraph: `
+Summarize the following text in clear, natural, well-written paragraphs.
+
+IMPORTANT RULES:
+- Write ONLY in paragraph format.
+- Do NOT use bullet points.
+- Do NOT use numbered lists.
+- Do NOT use asterisks (*) or list symbols.
+- Connect the sentences naturally.
+- Preserve the most important information.
+- Use the same language as the original text.
+      `,
+
+      bullets: `
+Summarize the following text using clear and concise bullet points.
+
+IMPORTANT RULES:
+- Use bullet points for each main idea.
+- Do NOT write a single paragraph.
+- Preserve the most important information.
+- Use the same language as the original text.
+      `,
+
+      short: `
+Write a short, clear paragraph summarizing the following text.
+Do NOT use bullet points or numbered lists.
+Use the same language as the original text.
+      `,
+
+      keywords: `
+Extract the most important keywords and key phrases from the following text.
+Present them as a concise list.
+Use the same language as the original text.
+      `
     };
 
-    const systemPrompt = prompts[mode] || prompts.bullets;
+    const systemPrompt = prompts[mode] || prompts.paragraph;
 
     console.log('Sending request to Gemini Interactions API...');
+    console.log('Selected summary mode:', mode);
 
     const response = await fetch(
       'https://generativelanguage.googleapis.com/v1beta/interactions',
