@@ -110,13 +110,23 @@ Use the same language as the original text.
       );
     }
 
-    const summary = (data.steps || [])
-      .filter(step => step.type === 'model_output')
-      .flatMap(step => step.content || [])
-      .filter(item => item.type === 'text')
-      .map(item => item.text || '')
+    const rawSummary = (data.steps || [])
+  .filter(step => step.type === 'model_output')
+  .flatMap(step => step.content || [])
+  .filter(item => item.type === 'text')
+  .map(item => item.text || '')
+  .join('\n')
+  .trim();
+
+// Convert asterisk and dash bullets into round bullets
+const summary = mode === 'bullets'
+  ? rawSummary
+      .split('\n')
+      .map(line =>
+        line.replace(/^(\s*)(?:\*+|-|•)\s+/, '$1• ')
+      )
       .join('\n')
-      .trim();
+  : rawSummary;
 
     if (!summary) {
       console.error('Gemini returned no summary:', data);
